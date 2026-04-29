@@ -8,7 +8,31 @@ export class RegisterDto {
   @MinLength(6)
   password: string;
 
+  @IsString()
+  @MinLength(1)
+  firstName: string;
+
+  @IsString()
+  @MinLength(1)
+  lastName: string;
+
   @IsOptional()
   @IsString()
-  displayName?: string;
+  rut?: string;
+
+  @IsString()
+  @MinLength(1)
+  workplace: string;
+
+  @IsString()
+  @MinLength(1)
+  medicalArea: string;
+
+  @IsString()
+  @MinLength(1)
+  phoneNumber: string;
+
+  @IsString()
+  @MinLength(1)
+  city: string;
 }

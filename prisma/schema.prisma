@@ -29,7 +29,13 @@ model User {
   id            String     @id @default(uuid())
   firebaseUid   String     @unique
   email         String     @unique
-  displayName   String?
+  firstName     String     @default("")
+  lastName      String     @default("")
+  rut           String?
+  workplace     String     @default("")
+  medicalArea   String     @default("")
+  phoneNumber   String     @default("")
+  city          String     @default("")
   photoUrl      String?
   emailVerified Boolean    @default(false)
   disabled      Boolean    @default(false)

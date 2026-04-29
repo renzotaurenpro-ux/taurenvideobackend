@@ -31,7 +31,7 @@ export class AuthService {
       .createUser({
         email: dto.email,
         password: dto.password,
-        displayName: dto.displayName,
+        displayName: `${dto.firstName} ${dto.lastName}`.trim(),
       })
       .catch((err: any) => {
         const code = err?.errorInfo?.code || err?.code;
@@ -52,7 +52,13 @@ export class AuthService {
       data: {
         firebaseUid: firebaseUser.uid,
         email: dto.email,
-        displayName: dto.displayName,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        rut: dto.rut ?? null,
+        workplace: dto.workplace,
+        medicalArea: dto.medicalArea,
+        phoneNumber: dto.phoneNumber,
+        city: dto.city,
         emailVerified: false,
       },
     });
@@ -61,7 +67,13 @@ export class AuthService {
       id: user.id,
       firebaseUid: user.firebaseUid,
       email: user.email,
-      displayName: user.displayName,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      rut: user.rut,
+      workplace: user.workplace,
+      medicalArea: user.medicalArea,
+      phoneNumber: user.phoneNumber,
+      city: user.city,
       role: user.role,
       createdAt: user.createdAt,
     };
@@ -80,11 +92,21 @@ export class AuthService {
     });
 
     if (!user) {
+      const fullName = (decodedToken.name || '').trim();
+      const parts = fullName ? fullName.split(/\s+/) : [];
+      const firstName = parts[0] ?? '';
+      const lastName = parts.length > 1 ? parts.slice(1).join(' ') : '';
+
       user = await this.prisma.user.create({
         data: {
           firebaseUid: decodedToken.uid,
           email: decodedToken.email!,
-          displayName: decodedToken.name || null,
+          firstName,
+          lastName,
+          workplace: '',
+          medicalArea: '',
+          phoneNumber: '',
+          city: '',
           photoUrl: decodedToken.picture || null,
           emailVerified: decodedToken.email_verified || false,
         },
@@ -95,7 +117,13 @@ export class AuthService {
       id: user.id,
       firebaseUid: user.firebaseUid,
       email: user.email,
-      displayName: user.displayName,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      rut: user.rut,
+      workplace: user.workplace,
+      medicalArea: user.medicalArea,
+      phoneNumber: user.phoneNumber,
+      city: user.city,
       photoUrl: user.photoUrl,
       emailVerified: user.emailVerified,
       role: user.role,
@@ -114,7 +142,13 @@ export class AuthService {
     return {
       id: user.id,
       email: user.email,
-      displayName: user.displayName,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      rut: user.rut,
+      workplace: user.workplace,
+      medicalArea: user.medicalArea,
+      phoneNumber: user.phoneNumber,
+      city: user.city,
       photoUrl: user.photoUrl,
       emailVerified: user.emailVerified,
       role: user.role,
@@ -134,21 +168,35 @@ export class AuthService {
     const updated = await this.prisma.user.update({
       where: { firebaseUid },
       data: {
-        ...(dto.displayName !== undefined && { displayName: dto.displayName }),
+        ...(dto.firstName !== undefined && { firstName: dto.firstName }),
+        ...(dto.lastName !== undefined && { lastName: dto.lastName }),
+        ...(dto.rut !== undefined && { rut: dto.rut }),
+        ...(dto.workplace !== undefined && { workplace: dto.workplace }),
+        ...(dto.medicalArea !== undefined && { medicalArea: dto.medicalArea }),
+        ...(dto.phoneNumber !== undefined && { phoneNumber: dto.phoneNumber }),
+        ...(dto.city !== undefined && { city: dto.city }),
         ...(dto.photoUrl !== undefined && { photoUrl: dto.photoUrl }),
       },
     });
 
-    if (dto.displayName !== undefined) {
+    if (dto.firstName !== undefined || dto.lastName !== undefined) {
+      const nextFirst = dto.firstName ?? updated.firstName;
+      const nextLast = dto.lastName ?? updated.lastName;
       await this.firebaseService
         .getAuth()
-        .updateUser(firebaseUid, { displayName: dto.displayName });
+        .updateUser(firebaseUid, { displayName: `${nextFirst} ${nextLast}`.trim() });
     }
 
     return {
       id: updated.id,
       email: updated.email,
-      displayName: updated.displayName,
+      firstName: updated.firstName,
+      lastName: updated.lastName,
+      rut: updated.rut,
+      workplace: updated.workplace,
+      medicalArea: updated.medicalArea,
+      phoneNumber: updated.phoneNumber,
+      city: updated.city,
       photoUrl: updated.photoUrl,
       role: updated.role,
     };

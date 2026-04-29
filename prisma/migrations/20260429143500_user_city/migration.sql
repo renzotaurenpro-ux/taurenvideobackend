@@ -1,0 +1,3 @@
+ALTER TABLE "users"
+ADD COLUMN     "city" TEXT NOT NULL DEFAULT '';
+

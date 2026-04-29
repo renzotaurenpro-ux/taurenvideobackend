@@ -1,0 +1,5 @@
+ALTER TABLE "users"
+ADD COLUMN     "workplace" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "medicalArea" TEXT NOT NULL DEFAULT '',
+ADD COLUMN     "phoneNumber" TEXT NOT NULL DEFAULT '';
+

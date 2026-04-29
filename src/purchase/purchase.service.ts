@@ -39,7 +39,13 @@ export class PurchaseService {
           select: {
             id: true,
             email: true,
-            displayName: true,
+            firstName: true,
+            lastName: true,
+            rut: true,
+            workplace: true,
+            medicalArea: true,
+            phoneNumber: true,
+            city: true,
           },
         },
         video: {
