@@ -17,8 +17,12 @@ export class PaymentService {
     private configService: ConfigService,
     private prisma: PrismaService,
   ) {
+    const accessToken = this.configService.get<string>('MP_ACCESS_TOKEN');
+    if (!accessToken) {
+      throw new Error('MP_ACCESS_TOKEN no está configurado');
+    }
     const client = new MercadoPagoConfig({
-      accessToken: this.configService.get<string>('MP_ACCESS_TOKEN')!,
+      accessToken,
     });
     this.preference = new Preference(client);
     this.payment = new Payment(client);
@@ -38,6 +42,16 @@ export class PaymentService {
       throw new ConflictException('Ya compraste este video');
     }
 
+    const successUrl = this.configService.get<string>('MP_SUCCESS_URL');
+    const failureUrl = this.configService.get<string>('MP_FAILURE_URL');
+    const pendingUrl = this.configService.get<string>('MP_PENDING_URL');
+    const webhookUrl = this.configService.get<string>('MP_WEBHOOK_URL');
+
+    if (!successUrl) throw new BadRequestException('MP_SUCCESS_URL no está configurado');
+    if (!failureUrl) throw new BadRequestException('MP_FAILURE_URL no está configurado');
+    if (!pendingUrl) throw new BadRequestException('MP_PENDING_URL no está configurado');
+    if (!webhookUrl) throw new BadRequestException('MP_WEBHOOK_URL no está configurado');
+
     const result = await this.preference.create({
       body: {
         items: [
@@ -51,13 +65,13 @@ export class PaymentService {
           },
         ],
         back_urls: {
-          success: this.configService.get<string>('MP_SUCCESS_URL'),
-          failure: this.configService.get<string>('MP_FAILURE_URL'),
-          pending: this.configService.get<string>('MP_PENDING_URL'),
+          success: successUrl,
+          failure: failureUrl,
+          pending: pendingUrl,
         },
         auto_return: 'approved',
         external_reference: `${userId}|${videoId}`,
-        notification_url: this.configService.get<string>('MP_WEBHOOK_URL'),
+        notification_url: webhookUrl,
       },
     });
 
