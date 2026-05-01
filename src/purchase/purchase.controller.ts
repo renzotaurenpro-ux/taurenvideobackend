@@ -45,6 +45,10 @@ export class PurchaseController {
       throw new NotFoundException('Usuario no encontrado');
     }
 
+    if (user.role === Role.ADMIN) {
+      return { purchased: true };
+    }
+
     return this.purchaseService.hasUserPurchasedVideo(user.id, videoId);
   }
 

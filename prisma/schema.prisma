@@ -53,7 +53,7 @@ model Video {
   description        String?
   url                String
   thumbnailUrl       String?
-  cloudinaryPublicId String?
+  bunnyVideoId       String?
   priceClp           Int
   duration           Int?
   order              Int        @default(0)

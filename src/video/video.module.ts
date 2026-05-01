@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { VideoController } from './video.controller.js';
 import { VideoService } from './video.service.js';
-import { CloudinaryModule } from '../cloudinary/cloudinary.module.js';
+import { BunnyModule } from '../bunny/bunny.module.js';
 
 @Module({
-  imports: [CloudinaryModule],
+  imports: [BunnyModule],
   controllers: [VideoController],
   providers: [VideoService],
   exports: [VideoService],
