@@ -43,6 +43,8 @@ model User {
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
   purchases     Purchase[]
+  attempts      ExamAttempt[]
+  certificates  Certificate[]
 
   @@map("users")
 }
@@ -63,6 +65,68 @@ model Video {
   purchases          Purchase[]
 
   @@map("videos")
+}
+
+model Exam {
+  id           String         @id @default(uuid())
+  videoId      String?
+  title        String
+  passingScore Int            @default(60)
+  published    Boolean        @default(false)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  questions    ExamQuestion[]
+  attempts     ExamAttempt[]
+  certificates Certificate[]
+
+  @@map("exams")
+}
+
+model ExamQuestion {
+  id        String       @id @default(uuid())
+  examId    String
+  text      String
+  order     Int          @default(0)
+  exam      Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
+  options   ExamOption[]
+
+  @@map("exam_questions")
+}
+
+model ExamOption {
+  id         String       @id @default(uuid())
+  questionId String
+  text       String
+  isCorrect  Boolean      @default(false)
+  question   ExamQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("exam_options")
+}
+
+model ExamAttempt {
+  id          String   @id @default(uuid())
+  userId      String
+  examId      String
+  score       Int
+  passed      Boolean
+  submittedAt DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam        Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@map("exam_attempts")
+}
+
+model Certificate {
+  id              String   @id @default(uuid())
+  userId          String
+  examId          String
+  certificateCode String   @unique
+  issuedAt        DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam            Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, examId])
+  @@map("certificates")
 }
 
 model Purchase {
