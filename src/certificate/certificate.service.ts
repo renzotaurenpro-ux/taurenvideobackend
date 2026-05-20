@@ -19,15 +19,23 @@ export class CertificateService {
       where: { userId_examId: { userId, examId } },
     });
 
-    if (existing) return existing;
+    if (existing) {
+      return this.prisma.certificate.findUnique({
+        where: { id: existing.id },
+        include: {
+          user: { select: { firstName: true, lastName: true, rut: true, email: true, city: true, medicalArea: true, workplace: true } },
+          exam: { select: { title: true, courseId: true } },
+        },
+      });
+    }
 
     const certificateCode = randomBytes(16).toString('hex').toUpperCase();
 
     return this.prisma.certificate.create({
       data: { userId, examId, certificateCode },
       include: {
-        user: { select: { firstName: true, lastName: true, email: true } },
-        exam: { select: { title: true } },
+        user: { select: { firstName: true, lastName: true, rut: true, email: true, city: true, medicalArea: true, workplace: true } },
+        exam: { select: { title: true, courseId: true } },
       },
     });
   }
@@ -36,8 +44,8 @@ export class CertificateService {
     const certificate = await this.prisma.certificate.findUnique({
       where: { certificateCode },
       include: {
-        user: { select: { firstName: true, lastName: true, email: true } },
-        exam: { select: { title: true, videoId: true } },
+        user: { select: { firstName: true, lastName: true, rut: true, email: true, city: true, medicalArea: true, workplace: true } },
+        exam: { select: { title: true, courseId: true } },
       },
     });
 
@@ -58,7 +66,7 @@ export class CertificateService {
     return this.prisma.certificate.findMany({
       where: { userId },
       include: {
-        exam: { select: { title: true, videoId: true } },
+        exam: { select: { title: true, courseId: true } },
       },
       orderBy: { issuedAt: 'desc' },
     });

@@ -58,12 +58,26 @@ function matchFiles() {
 try {
   const items = matchFiles();
 
+  let course = await prisma.course.findFirst({
+    where: { title: 'Curso de Inmunología Clínica' },
+  });
+
+  if (!course) {
+    course = await prisma.course.create({
+      data: {
+        title: 'Curso de Inmunología Clínica',
+        description: 'Curso completo de inmunología clínica aplicada. Incluye todos los módulos y episodios.',
+        priceClp: 25000,
+        published: true,
+      },
+    });
+  }
+
   await prisma.purchase.deleteMany({});
   await prisma.video.deleteMany({});
-  console.log('Videos anteriores eliminados de BD.');
 
   for (const item of items) {
-    console.log(`Subiendo: ${item.title} (${item.file})...`);
+    console.log(`Subiendo: ${item.title}...`);
     const guid = await createSlot(item.title);
     await uploadBinary(guid, item.file);
     const embedUrl = `https://iframe.mediadelivery.net/embed/${libraryId}/${guid}`;
@@ -73,7 +87,7 @@ try {
         description: 'III Jornadas Regionales de Inmunología Clínica',
         url: embedUrl,
         bunnyVideoId: guid,
-        priceClp: 25000,
+        courseId: course.id,
         order: item.order,
         published: true,
       },
@@ -81,7 +95,10 @@ try {
     console.log('OK:', video.id, guid);
   }
 
-  console.log('Listo. 3 videos subidos a Bunny y registrados en BD.');
+  await prisma.exam.updateMany({ data: { courseId: course.id } });
+
+  console.log('Curso:', course.id);
+  console.log('3 episodios del Módulo 1 registrados.');
 } finally {
   await prisma.$disconnect();
 }

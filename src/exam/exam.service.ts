@@ -6,6 +6,18 @@ import { SubmitExamDto } from './dto/submit-exam.dto.js';
 export class ExamService {
   constructor(private prisma: PrismaService) {}
 
+  private async checkCourseAccess(userId: string, courseId: string | null) {
+    if (!courseId) return;
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (user?.role === 'ADMIN') return;
+    const purchase = await this.prisma.purchase.findUnique({
+      where: { userId_courseId: { userId, courseId } },
+    });
+    if (purchase?.status !== 'COMPLETED') {
+      throw new ForbiddenException('Debes comprar el curso para acceder al test');
+    }
+  }
+
   async findAll(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
@@ -15,9 +27,7 @@ export class ExamService {
         include: {
           questions: {
             orderBy: { order: 'asc' },
-            include: {
-              options: { select: { id: true, text: true } },
-            },
+            include: { options: { select: { id: true, text: true } } },
           },
         },
       });
@@ -25,58 +35,22 @@ export class ExamService {
 
     const purchases = await this.prisma.purchase.findMany({
       where: { userId, status: 'COMPLETED' },
-      select: { videoId: true },
+      select: { courseId: true },
     });
 
-    const purchasedVideoIds = purchases.map((p) => p.videoId);
+    const purchasedCourseIds = purchases.map((p) => p.courseId);
 
-    return this.prisma.exam.findMany({
+    const exams = await this.prisma.exam.findMany({
       where: { published: true },
       include: {
         questions: {
           orderBy: { order: 'asc' },
-          include: {
-            options: { select: { id: true, text: true } },
-          },
-        },
-      },
-    }).then((exams) =>
-      exams.filter((e) => !e.videoId || purchasedVideoIds.includes(e.videoId)),
-    );
-  }
-
-  async findOne(id: string, userId: string) {
-    const exam = await this.prisma.exam.findUnique({
-      where: { id },
-      include: {
-        questions: {
-          orderBy: { order: 'asc' },
-          include: {
-            options: { select: { id: true, text: true } },
-          },
+          include: { options: { select: { id: true, text: true } } },
         },
       },
     });
-    if (!exam) throw new NotFoundException('Examen no encontrado');
 
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-
-    if (user?.role !== 'ADMIN' && exam.videoId) {
-      const purchase = await this.prisma.purchase.findUnique({
-        where: { userId_videoId: { userId, videoId: exam.videoId } },
-      });
-      if (purchase?.status !== 'COMPLETED') {
-        throw new ForbiddenException('Debes comprar el video para acceder al test');
-      }
-    }
-
-    return exam;
-  }
-
-  async findAllAdmin() {
-    return this.prisma.exam.findMany({
-      include: { questions: { include: { options: true } } },
-    });
+    return exams.filter((e) => !e.courseId || purchasedCourseIds.includes(e.courseId));
   }
 
   async submit(examId: string, userId: string, dto: SubmitExamDto) {
@@ -88,16 +62,7 @@ export class ExamService {
     if (!exam) throw new NotFoundException('Examen no encontrado');
     if (!exam.published) throw new BadRequestException('Examen no disponible');
 
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-
-    if (user?.role !== 'ADMIN' && exam.videoId) {
-      const purchase = await this.prisma.purchase.findUnique({
-        where: { userId_videoId: { userId, videoId: exam.videoId } },
-      });
-      if (purchase?.status !== 'COMPLETED') {
-        throw new ForbiddenException('Debes comprar el video para acceder al test');
-      }
-    }
+    await this.checkCourseAccess(userId, exam.courseId);
 
     const total = exam.questions.length;
     if (total === 0) throw new BadRequestException('El examen no tiene preguntas');
@@ -129,12 +94,5 @@ export class ExamService {
       notaAprobacion: 5,
       passed,
     };
-  }
-
-  async remove(id: string) {
-    const exam = await this.prisma.exam.findUnique({ where: { id } });
-    if (!exam) throw new NotFoundException('Examen no encontrado');
-    await this.prisma.exam.delete({ where: { id } });
-    return { message: 'Examen eliminado' };
   }
 }

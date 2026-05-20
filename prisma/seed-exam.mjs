@@ -287,9 +287,12 @@ try {
     console.log('Examen anterior eliminado.');
   }
 
+  const course = await prisma.course.findFirst({ where: { published: true } });
+
   const exam = await prisma.exam.create({
     data: {
       title: 'Test de Inmunología Clínica',
+      courseId: course?.id,
       passingScore: 67,
       published: true,
       questions: {

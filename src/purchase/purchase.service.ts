@@ -5,31 +5,17 @@ import { PrismaService } from '../prisma/prisma.service.js';
 export class PurchaseService {
   constructor(private prisma: PrismaService) {}
 
-  async getUserPurchases(userId: string) {
-    return this.prisma.purchase.findMany({
-      where: { userId, status: 'COMPLETED' },
-      include: {
-        video: {
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            url: true,
-            thumbnailUrl: true,
-            duration: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
+  async hasUserPurchasedCourse(userId: string, courseId: string) {
+    const purchase = await this.prisma.purchase.findUnique({
+      where: { userId_courseId: { userId, courseId } },
     });
+    return { purchased: purchase?.status === 'COMPLETED' };
   }
 
-  async hasUserPurchasedVideo(userId: string, videoId: string) {
-    const purchase = await this.prisma.purchase.findUnique({
-      where: { userId_videoId: { userId, videoId } },
-    });
-
-    return { purchased: purchase?.status === 'COMPLETED' };
+  async hasUserAccessToCourse(userId: string, courseId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (user?.role === 'ADMIN') return { purchased: true };
+    return this.hasUserPurchasedCourse(userId, courseId);
   }
 
   async getAllPurchases() {
@@ -48,7 +34,7 @@ export class PurchaseService {
             city: true,
           },
         },
-        video: {
+        course: {
           select: {
             id: true,
             title: true,

@@ -21,25 +21,23 @@ export class PaymentService {
     if (!accessToken) {
       throw new Error('MP_ACCESS_TOKEN no está configurado');
     }
-    const client = new MercadoPagoConfig({
-      accessToken,
-    });
+    const client = new MercadoPagoConfig({ accessToken });
     this.preference = new Preference(client);
     this.payment = new Payment(client);
   }
 
-  async createCheckoutSession(userId: string, videoId: string) {
-    const video = await this.prisma.video.findUnique({ where: { id: videoId } });
+  async createCheckoutSession(userId: string, courseId: string) {
+    const course = await this.prisma.course.findUnique({ where: { id: courseId } });
 
-    if (!video) throw new NotFoundException('Video no encontrado');
-    if (!video.published) throw new BadRequestException('Este video no está disponible');
+    if (!course) throw new NotFoundException('Curso no encontrado');
+    if (!course.published) throw new BadRequestException('Este curso no está disponible');
 
     const existingPurchase = await this.prisma.purchase.findUnique({
-      where: { userId_videoId: { userId, videoId } },
+      where: { userId_courseId: { userId, courseId } },
     });
 
     if (existingPurchase?.status === 'COMPLETED') {
-      throw new ConflictException('Ya compraste este video');
+      throw new ConflictException('Ya compraste este curso');
     }
 
     const successUrl = this.configService.get<string>('MP_SUCCESS_URL');
@@ -56,11 +54,11 @@ export class PaymentService {
       body: {
         items: [
           {
-            id: video.id,
-            title: video.title,
-            description: video.description || undefined,
+            id: course.id,
+            title: course.title,
+            description: course.description || undefined,
             quantity: 1,
-            unit_price: video.priceClp,
+            unit_price: course.priceClp,
             currency_id: 'CLP',
           },
         ],
@@ -70,7 +68,7 @@ export class PaymentService {
           pending: pendingUrl,
         },
         auto_return: 'approved',
-        external_reference: `${userId}|${videoId}`,
+        external_reference: `${userId}|${courseId}`,
         notification_url: webhookUrl,
       },
     });
@@ -87,10 +85,10 @@ export class PaymentService {
       await this.prisma.purchase.create({
         data: {
           userId,
-          videoId,
+          courseId,
           provider: 'MERCADOPAGO',
           providerSessionId: result.id!,
-          amountClp: video.priceClp,
+          amountClp: course.priceClp,
           status: 'PENDING',
         },
       });
@@ -116,8 +114,8 @@ export class PaymentService {
     const externalRef = paymentData.external_reference;
     if (!externalRef) return { received: true };
 
-    const [userId, videoId] = externalRef.split('|');
-    if (!userId || !videoId) return { received: true };
+    const [userId, courseId] = externalRef.split('|');
+    if (!userId || !courseId) return { received: true };
 
     const mpStatus = paymentData.status;
 
@@ -129,7 +127,7 @@ export class PaymentService {
           : 'FAILED';
 
     await this.prisma.purchase.updateMany({
-      where: { userId, videoId },
+      where: { userId, courseId },
       data: {
         status: purchaseStatus,
         providerPaymentId: String(paymentId),

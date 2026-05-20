@@ -26,22 +26,22 @@ enum PaymentProvider {
 }
 
 model User {
-  id            String     @id @default(uuid())
-  firebaseUid   String     @unique
-  email         String     @unique
-  firstName     String     @default("")
-  lastName      String     @default("")
+  id            String        @id @default(uuid())
+  firebaseUid   String        @unique
+  email         String        @unique
+  firstName     String        @default("")
+  lastName      String        @default("")
   rut           String?
-  workplace     String     @default("")
-  medicalArea   String     @default("")
-  phoneNumber   String     @default("")
-  city          String     @default("")
+  workplace     String        @default("")
+  medicalArea   String        @default("")
+  phoneNumber   String        @default("")
+  city          String        @default("")
   photoUrl      String?
-  emailVerified Boolean    @default(false)
-  disabled      Boolean    @default(false)
-  role          Role       @default(USER)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  emailVerified Boolean       @default(false)
+  disabled      Boolean       @default(false)
+  role          Role          @default(USER)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
   purchases     Purchase[]
   attempts      ExamAttempt[]
   certificates  Certificate[]
@@ -49,32 +49,49 @@ model User {
   @@map("users")
 }
 
+model Course {
+  id           String     @id @default(uuid())
+  title        String
+  description  String?
+  thumbnailUrl String?
+  priceClp     Int
+  published    Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  videos       Video[]
+  purchases    Purchase[]
+  exams        Exam[]
+
+  @@map("courses")
+}
+
 model Video {
-  id                 String     @id @default(uuid())
-  title              String
-  description        String?
-  url                String
-  thumbnailUrl       String?
-  bunnyVideoId       String?
-  priceClp           Int
-  duration           Int?
-  order              Int        @default(0)
-  published          Boolean    @default(false)
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
-  purchases          Purchase[]
+  id           String   @id @default(uuid())
+  courseId     String?
+  title        String
+  description  String?
+  url          String
+  thumbnailUrl String?
+  bunnyVideoId String?
+  duration     Int?
+  order        Int      @default(0)
+  published    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  course       Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
 
   @@map("videos")
 }
 
 model Exam {
   id           String         @id @default(uuid())
-  videoId      String?
+  courseId     String?
   title        String
   passingScore Int            @default(60)
   published    Boolean        @default(false)
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
+  course       Course?        @relation(fields: [courseId], references: [id], onDelete: SetNull)
   questions    ExamQuestion[]
   attempts     ExamAttempt[]
   certificates Certificate[]
@@ -83,12 +100,12 @@ model Exam {
 }
 
 model ExamQuestion {
-  id        String       @id @default(uuid())
-  examId    String
-  text      String
-  order     Int          @default(0)
-  exam      Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
-  options   ExamOption[]
+  id      String       @id @default(uuid())
+  examId  String
+  text    String
+  order   Int          @default(0)
+  exam    Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
+  options ExamOption[]
 
   @@map("exam_questions")
 }
@@ -130,19 +147,19 @@ model Certificate {
 }
 
 model Purchase {
-  id               String         @id @default(uuid())
-  userId           String
-  videoId          String
-  provider         PaymentProvider
-  providerSessionId  String       @unique
-  providerPaymentId  String?
-  amountClp        Int
-  status           PurchaseStatus @default(PENDING)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  video            Video          @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  id                String          @id @default(uuid())
+  userId            String
+  courseId          String
+  provider          PaymentProvider
+  providerSessionId String          @unique
+  providerPaymentId String?
+  amountClp         Int
+  status            PurchaseStatus  @default(PENDING)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course            Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, videoId])
+  @@unique([userId, courseId])
   @@map("purchases")
 }

@@ -12,7 +12,7 @@ try {
 
   if (!found) {
     const all = await prisma.user.findMany({ select: { email: true, role: true } });
-    console.log('Usuario no encontrado. Usuarios en BD:', JSON.stringify(all, null, 2));
+    console.log('Usuario no encontrado:', JSON.stringify(all, null, 2));
     process.exit(1);
   }
 
@@ -20,26 +20,15 @@ try {
     where: { id: found.id },
     data: { role: 'ADMIN' },
   });
-  console.log('Usuario actualizado:', user.email, user.role);
+  console.log('Admin:', user.email);
 
-  const videos = await prisma.video.findMany({ orderBy: { createdAt: 'asc' } });
-  console.log('Videos encontrados:', videos.map(v => `${v.id} | ${v.title}`));
-
-  const keep = videos.find(v => v.title.toLowerCase().includes('asdasdas'));
-
-  if (!keep) {
-    console.log('No se encontró video con título "asdasdas". Se listan todos para revisión.');
-    videos.forEach(v => console.log(v.id, v.title));
-  } else {
-    console.log('Video a conservar:', keep.id, keep.title);
-    const toDelete = videos.filter(v => v.id !== keep.id);
-    for (const v of toDelete) {
-      await prisma.purchase.deleteMany({ where: { videoId: v.id } });
-      await prisma.video.delete({ where: { id: v.id } });
-      console.log('Eliminado:', v.id, v.title);
-    }
-    console.log('Listo. Solo queda:', keep.title);
-  }
+  const course = await prisma.course.findFirst();
+  const videos = await prisma.video.findMany({
+    where: course ? { courseId: course.id } : {},
+    orderBy: { order: 'asc' },
+  });
+  console.log('Curso:', course?.title ?? 'sin curso', course?.id ?? '-');
+  videos.forEach((v) => console.log(`  ${v.order}. ${v.title}`));
 } finally {
   await prisma.$disconnect();
 }
