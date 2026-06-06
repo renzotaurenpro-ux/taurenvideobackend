@@ -1,21 +1,43 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { Role } from '../../generated/prisma/client.js';
+
+const ACCESS_CACHE_MS = 45_000;
+const accessCache = new Map<string, { at: number; purchased: boolean }>();
 
 @Injectable()
 export class PurchaseService {
   constructor(private prisma: PrismaService) {}
 
-  async hasUserPurchasedCourse(userId: string, courseId: string) {
-    const purchase = await this.prisma.purchase.findUnique({
-      where: { userId_courseId: { userId, courseId } },
+  async checkCourseAccess(firebaseUid: string, courseId: string) {
+    const key = `${firebaseUid}:${courseId}`;
+    const now = Date.now();
+    const cached = accessCache.get(key);
+    if (cached && now - cached.at < ACCESS_CACHE_MS) {
+      return { purchased: cached.purchased };
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { firebaseUid },
+      select: {
+        role: true,
+        purchases: {
+          where: { courseId, status: 'COMPLETED' },
+          select: { id: true },
+          take: 1,
+        },
+      },
     });
-    return { purchased: purchase?.status === 'COMPLETED' };
+
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+
+    const purchased = user.role === Role.ADMIN || user.purchases.length > 0;
+    accessCache.set(key, { at: now, purchased });
+    return { purchased };
   }
 
-  async hasUserAccessToCourse(userId: string, courseId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (user?.role === 'ADMIN') return { purchased: true };
-    return this.hasUserPurchasedCourse(userId, courseId);
+  clearAccessCache(firebaseUid: string, courseId: string) {
+    accessCache.delete(`${firebaseUid}:${courseId}`);
   }
 
   async getAllPurchases() {
