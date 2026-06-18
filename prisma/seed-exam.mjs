@@ -7,291 +7,182 @@ const prisma = new PrismaClient({ adapter });
 
 const questions = [
   {
-    text: '¿Cuál es la función principal del sistema inmune adaptativo?',
+    text: '¿Cuál es la característica clínica dominante de los errores innatos de inmunidad del grupo de disregulación inmune (PIRD), en contraste con las inmunodeficiencias primarias clásicas (PIDD)?',
     options: [
-      { text: 'Reconocer y recordar antígenos específicos', isCorrect: true },
-      { text: 'Actuar de forma inmediata e inespecífica', isCorrect: false },
-      { text: 'Producir glóbulos rojos', isCorrect: false },
-      { text: 'Sintetizar hormonas', isCorrect: false },
+      { text: 'Linfopenia profunda al nacimiento', isCorrect: false },
+      { text: 'Infecciones recurrentes por gérmenes oportunistas', isCorrect: false },
+      { text: 'Autoinmunidad múltiple, linfoproliferación o hiperinflamación', isCorrect: true },
+      { text: 'Hipogammaglobulinemia aislada', isCorrect: false },
     ],
   },
   {
-    text: '¿Qué tipo de célula es responsable de la inmunidad humoral?',
+    text: 'En relación con las inmunoglobulinas es cierto que:',
     options: [
-      { text: 'Linfocitos B', isCorrect: true },
-      { text: 'Linfocitos T citotóxicos', isCorrect: false },
-      { text: 'Macrófagos', isCorrect: false },
-      { text: 'Células NK', isCorrect: false },
+      { text: 'Sólo tienen funciones protectoras por lo que su alteración se traduce exclusivamente en un mayor riesgo de infecciones', isCorrect: false },
+      { text: 'La terapia de reemplazo con inmunoglobulina endovenosa es una de las principales herramientas terapéuticas de los pacientes con errores innatos de la inmunidad', isCorrect: true },
+      { text: 'Los productos de inmunoglobulinas se fabrican a partir de síntesis en laboratorio', isCorrect: false },
+      { text: 'Tiene una vida media prolongada de hasta 6 meses', isCorrect: false },
     ],
   },
   {
-    text: '¿Cuál de las siguientes inmunoglobulinas es la más abundante en suero?',
+    text: 'Un escolar presenta episodios recurrentes de fiebre desde periodo lactante, acompañados de exantema urticarial y elevación de reactantes inflamatorios. Los estudios microbiológicos son negativos y entre las crisis se encuentra completamente asintomático, con normalización de los parámetros inflamatorios. Este cuadro es más compatible con:',
     options: [
-      { text: 'IgG', isCorrect: true },
-      { text: 'IgA', isCorrect: false },
-      { text: 'IgM', isCorrect: false },
-      { text: 'IgE', isCorrect: false },
+      { text: 'Inmunodeficiencia predominantemente de anticuerpos', isCorrect: false },
+      { text: 'Síndrome autoinflamatorio', isCorrect: true },
+      { text: 'Inmunodeficiencia combinada grave', isCorrect: false },
+      { text: 'Síndrome linfoproliferativo autoinmune', isCorrect: false },
     ],
   },
   {
-    text: '¿Qué inmunoglobulina se asocia principalmente con reacciones alérgicas?',
+    text: '¿Cuál de las siguientes manifestaciones cutáneas debería alertar más sobre un posible error innato de la inmunidad?',
     options: [
-      { text: 'IgE', isCorrect: true },
-      { text: 'IgG', isCorrect: false },
-      { text: 'IgD', isCorrect: false },
-      { text: 'IgM', isCorrect: false },
+      { text: 'Acné inflamatorio adolescente', isCorrect: false },
+      { text: 'Melasma facial', isCorrect: false },
+      { text: 'Dermatitis atópica leve', isCorrect: false },
+      { text: 'Verrugas extensas, numerosas y persistentes', isCorrect: true },
+      { text: 'Queratosis pilaris', isCorrect: false },
     ],
   },
   {
-    text: '¿Cuál es el primer anticuerpo producido en una respuesta inmune primaria?',
+    text: '¿Cuáles son los patógenos característicamente asociados a los defectos de la inmunidad humoral?',
     options: [
-      { text: 'IgM', isCorrect: true },
-      { text: 'IgG', isCorrect: false },
-      { text: 'IgA', isCorrect: false },
-      { text: 'IgE', isCorrect: false },
+      { text: 'Micobacterias y Salmonella spp.', isCorrect: false },
+      { text: 'Virus herpes y enterovirus', isCorrect: false },
+      { text: 'Candida spp. y Pneumocystis jirovecii', isCorrect: false },
+      { text: 'Streptococcus pneumoniae, Haemophilus influenzae y Neisseria meningitidis', isCorrect: true },
+      { text: 'Toxoplasma gondii y Cryptosporidium spp.', isCorrect: false },
     ],
   },
   {
-    text: '¿Qué célula presenta antígenos a los linfocitos T mediante el complejo MHC-II?',
+    text: 'Respecto a los defectos congénitos de los fagocitos, ¿cuál de las siguientes situaciones clínicas debe hacer sospechar este tipo de inmunodeficiencia primaria?',
     options: [
-      { text: 'Célula dendrítica', isCorrect: true },
-      { text: 'Linfocito B virginal', isCorrect: false },
-      { text: 'Eritrocito', isCorrect: false },
-      { text: 'Plaqueta', isCorrect: false },
+      { text: 'Infecciones respiratorias virales recurrentes autolimitadas en un escolar sano', isCorrect: false },
+      { text: 'Infecciones bacterianas y fúngicas recurrentes con compromiso de piel, partes blandas, hueso o linfonodos', isCorrect: true },
+      { text: 'Diarrea crónica asociada a hipogammaglobulinemia aislada', isCorrect: false },
+      { text: 'Mononucleosis infecciosa grave por virus Epstein-Barr', isCorrect: false },
+      { text: 'Anafilaxia recurrente desencadenada por alimentos', isCorrect: false },
     ],
   },
   {
-    text: '¿Qué molécula reconoce el linfocito T citotóxico (CD8+)?',
+    text: 'En relación a las Inmunodeficiencias combinadas severas (SCID), es correcto:',
     options: [
-      { text: 'Antígenos presentados por MHC-I', isCorrect: true },
-      { text: 'Antígenos presentados por MHC-II', isCorrect: false },
-      { text: 'Anticuerpos libres', isCorrect: false },
-      { text: 'Complemento activado', isCorrect: false },
+      { text: 'Son el fenotipo clínico más frecuente dentro de los errores innatos de la inmunidad', isCorrect: false },
+      { text: 'Tienen 100% de mortalidad antes de los 2 años de vida', isCorrect: true },
+      { text: 'Presentan alteración del Test de Dihidrorodamina por citometría de flujo', isCorrect: false },
+      { text: 'Presentan valores altos de TRECs en el screening neonatal', isCorrect: false },
     ],
   },
   {
-    text: '¿Cuál de los siguientes es un error innato de la inmunidad?',
+    text: '¿Cuál es el patrón de herencia más frecuente de la enfermedad granulomatosa crónica secundaria a variante del gen CYBB?',
     options: [
-      { text: 'Agammaglobulinemia de Bruton', isCorrect: true },
-      { text: 'Lupus eritematoso sistémico', isCorrect: false },
-      { text: 'Artritis reumatoide', isCorrect: false },
-      { text: 'Asma alérgica', isCorrect: false },
+      { text: 'Autosómico dominante', isCorrect: false },
+      { text: 'Autosómico recesivo', isCorrect: false },
+      { text: 'Ligado al cromosoma X dominante', isCorrect: false },
+      { text: 'Ligado al cromosoma X recesivo', isCorrect: true },
     ],
   },
   {
-    text: '¿Qué vía del complemento se activa primero en una respuesta innata frente a bacterias?',
+    text: 'En relación a las manifestaciones no infecciosas en Errores Innatos de la Inmunidad, ¿en qué porcentaje esta forma de presentación puede ser la primera manifestación de un error innato de la inmunidad?',
     options: [
-      { text: 'Vía alternativa', isCorrect: true },
-      { text: 'Vía clásica', isCorrect: false },
-      { text: 'Vía de las lectinas', isCorrect: false },
-      { text: 'Vía del complemento terminal', isCorrect: false },
+      { text: '10%', isCorrect: false },
+      { text: '15%', isCorrect: false },
+      { text: '25%', isCorrect: true },
+      { text: '30%', isCorrect: false },
+      { text: '35%', isCorrect: false },
     ],
   },
   {
-    text: '¿Qué citoquina es fundamental para la diferenciación de linfocitos T helper (Th1)?',
+    text: '¿Cuál es actualmente el principal objetivo de la profilaxis a largo plazo en el angioedema hereditario?',
     options: [
-      { text: 'IL-12', isCorrect: true },
-      { text: 'IL-4', isCorrect: false },
-      { text: 'IL-10', isCorrect: false },
-      { text: 'TGF-β', isCorrect: false },
+      { text: 'Normalizar los niveles séricos de C4', isCorrect: false },
+      { text: 'Evitar exclusivamente los episodios de edema laríngeo', isCorrect: false },
+      { text: 'Reducir la frecuencia y gravedad de los ataques y mejorar la calidad de vida', isCorrect: true },
+      { text: 'Sustituir la necesidad de tratamiento durante los ataques agudos', isCorrect: false },
     ],
   },
   {
-    text: '¿Cuál es la característica principal de la hipersensibilidad tipo I?',
+    text: '¿Cuál es el examen de primera línea más útil para orientar el estudio de un paciente con sospecha de Error Innato de la Inmunidad?',
     options: [
-      { text: 'Mediada por IgE y mastocitos', isCorrect: true },
-      { text: 'Mediada por complejos inmunes', isCorrect: false },
-      { text: 'Mediada por linfocitos T', isCorrect: false },
-      { text: 'Mediada por IgG citotóxica', isCorrect: false },
+      { text: 'Secuenciación de exoma completo', isCorrect: false },
+      { text: 'Citometría de flujo de subpoblaciones linfocitarias', isCorrect: false },
+      { text: 'Hemograma con diferencial e inmunoglobulinas séricas', isCorrect: true },
+      { text: 'Panel genético para IEI', isCorrect: false },
     ],
   },
   {
-    text: '¿Qué laboratorio es útil como cribado en la inmunodeficiencia humoral?',
+    text: 'Un niño de 8 años es derivado por historia de eczema de inicio neonatal, abscesos cutáneos "fríos" recurrentes por Staphylococcus aureus (con escasa signología inflamatoria), neumonías a repetición con formación de neumatoceles, candidiasis mucocutánea, retención de dientes primarios, fracturas ante traumatismos menores y facies característica (frente prominente, puente nasal ancho, asimetría facial). La IgE sérica es de 8.500 IU/mL con eosinofilia moderada. ¿Cuál es el mecanismo molecular subyacente más probable?',
     options: [
-      { text: 'Cuantificación de inmunoglobulinas séricas', isCorrect: true },
-      { text: 'Recuento de eosinófilos', isCorrect: false },
-      { text: 'VSG', isCorrect: false },
-      { text: 'Hemoglobina glicosilada', isCorrect: false },
+      { text: 'Mutación de pérdida de función en DOCK8 con susceptibilidad a infecciones virales cutáneas graves', isCorrect: false },
+      { text: 'Mutación dominante-negativa en STAT3 con deterioro de la diferenciación de linfocitos Th17 y reducción de IL-17/IL-22', isCorrect: true },
+      { text: 'Mutación en AIRE con falla de la tolerancia central y poliendocrinopatía autoinmune', isCorrect: false },
+      { text: 'Mutación en BTK con bloqueo del desarrollo de linfocitos B y agammaglobulinemia', isCorrect: false },
+      { text: 'Mutación en WAS (proteína WASP) con trombocitopenia microplaquetaria y eczema', isCorrect: false },
     ],
   },
   {
-    text: '¿Qué enfermedad autoinmune afecta principalmente la unión neuromuscular?',
+    text: '¿Cuál de las siguientes afirmaciones sobre las bases genéticas y características clínicas del síndrome de DiGeorge es correcta?',
     options: [
-      { text: 'Miastenia gravis', isCorrect: true },
-      { text: 'Esclerosis múltiple', isCorrect: false },
-      { text: 'Síndrome de Sjögren', isCorrect: false },
-      { text: 'Psoriasis', isCorrect: false },
+      { text: 'Se produce principalmente por una mutación puntual en el gen TBX1 y cursa con hipercalcemia severa', isCorrect: false },
+      { text: 'Está causado por una microdeleción en la región 22q11.2, y sus manifestaciones clínicas incluyen defectos cardíacos congénitos, anomalías palatinas e inmunodeficiencia por hipoplasia tímica', isCorrect: true },
+      { text: 'Es un trastorno ligado al cromosoma X que afecta exclusivamente a varones y provoca macrocefalia', isCorrect: false },
+      { text: 'Se genera por una duplicación cromosómica y se caracteriza por un desarrollo excesivo de las glándulas paratiroides', isCorrect: false },
     ],
   },
   {
-    text: '¿Cuál de los siguientes anticuerpos es marcador del lupus eritematoso sistémico?',
+    text: '¿Cuál de las siguientes manifestaciones cutáneas debería alertar más sobre un posible error innato de la inmunidad?',
     options: [
-      { text: 'Anti-ADN de doble cadena (anti-dsDNA)', isCorrect: true },
-      { text: 'Anti-CCP', isCorrect: false },
-      { text: 'Anti-Jo-1', isCorrect: false },
-      { text: 'Anti-Scl-70', isCorrect: false },
+      { text: 'Acné inflamatorio adolescente', isCorrect: false },
+      { text: 'Melasma facial', isCorrect: false },
+      { text: 'Dermatitis atópica leve', isCorrect: false },
+      { text: 'Verrugas extensas, numerosas y persistentes', isCorrect: true },
+      { text: 'Queratosis pilaris', isCorrect: false },
     ],
   },
   {
-    text: '¿Qué receptor reconoce patrones moleculares asociados a patógenos (PAMPs)?',
+    text: '¿Cuál de las siguientes afirmaciones no forma parte de las recomendaciones actuales de inmunización en pacientes con errores innatos de la inmunidad?',
     options: [
-      { text: 'Toll-like receptors (TLR)', isCorrect: true },
-      { text: 'Receptor de células T (TCR)', isCorrect: false },
-      { text: 'Receptor de células B (BCR)', isCorrect: false },
-      { text: 'Receptor Fc', isCorrect: false },
+      { text: 'En pacientes con deficiencias predominante de Anticuerpos, sin terapia de reemplazo de Inmunoglobulinas, como el déficit de Anticuerpos Antineumococo o déficit de subclases de IgG, no se recomienda realizar controles serológicos para evaluar la respuesta post vacunal, sin necesidad de documentar títulos protectores para valorar refuerzos', isCorrect: true },
+      { text: 'En Inmunodeficiencias combinadas severas o combinadas con características sindromáticas, están contraindicadas de forma absoluta las vacunas vivas atenuadas', isCorrect: false },
+      { text: 'Pacientes con deficiencias de los componentes del complemento, pueden recibir todas las vacunas incluidas en el programa nacional de Inmunización, tanto inactivadas como vivas atenuadas', isCorrect: false },
+      { text: 'Es necesario actualizar la vacunación de los niños y adultos que viven con pacientes con errores innatos de la inmunidad, en especial quienes tienen familiares con defectos de la inmunidad celular', isCorrect: false },
     ],
   },
   {
-    text: '¿Cuál es el mecanismo de acción principal de los anticuerpos monoclonales anti-TNF?',
+    text: 'Según los criterios de la Fundación Jeffrey Modell (JMF), ¿cuál de los siguientes hallazgos se considera una "señal de alerta" para sospechar de un error innato de la inmunidad (inmunodeficiencia primaria) en un niño?',
     options: [
-      { text: 'Neutralizar el TNF-α reduciendo inflamación', isCorrect: true },
-      { text: 'Activar los linfocitos T reguladores', isCorrect: false },
-      { text: 'Inhibir la replicación viral', isCorrect: false },
-      { text: 'Estimular la producción de IgA', isCorrect: false },
-    ],
-  },
-  {
-    text: '¿Qué órgano es el principal sitio de maduración de los linfocitos T?',
-    options: [
-      { text: 'Timo', isCorrect: true },
-      { text: 'Bazo', isCorrect: false },
-      { text: 'Médula ósea', isCorrect: false },
-      { text: 'Ganglio linfático', isCorrect: false },
-    ],
-  },
-  {
-    text: '¿Qué inmunoglobulina predomina en secreciones mucosas como saliva y leche materna?',
-    options: [
-      { text: 'IgA secretora', isCorrect: true },
-      { text: 'IgG', isCorrect: false },
-      { text: 'IgM', isCorrect: false },
-      { text: 'IgD', isCorrect: false },
-    ],
-  },
-  {
-    text: '¿Cuál es la principal función de las células T reguladoras (Treg)?',
-    options: [
-      { text: 'Suprimir respuestas inmunes excesivas y mantener tolerancia', isCorrect: true },
-      { text: 'Activar linfocitos B para producir anticuerpos', isCorrect: false },
-      { text: 'Destruir células tumorales', isCorrect: false },
-      { text: 'Secretar IgE frente a parásitos', isCorrect: false },
-    ],
-  },
-  {
-    text: '¿Qué prueba confirma el diagnóstico de inmunodeficiencia variable común (IDVC)?',
-    options: [
-      { text: 'IgG sérica < 500 mg/dL con ausencia de respuesta a vacunas', isCorrect: true },
-      { text: 'Ausencia de linfocitos T en sangre periférica', isCorrect: false },
-      { text: 'Niveles elevados de IgE total', isCorrect: false },
-      { text: 'Complemento C3 disminuido', isCorrect: false },
-    ],
-  },
-  {
-    text: '¿Cuál es la causa más común de inmunodeficiencia secundaria a nivel mundial?',
-    options: [
-      { text: 'Infección por VIH', isCorrect: true },
-      { text: 'Desnutrición proteica', isCorrect: false },
-      { text: 'Uso de corticoides', isCorrect: false },
-      { text: 'Quimioterapia', isCorrect: false },
-    ],
-  },
-  {
-    text: '¿Qué célula efectora libera histamina en reacciones alérgicas inmediatas?',
-    options: [
-      { text: 'Mastocito', isCorrect: true },
-      { text: 'Linfocito T', isCorrect: false },
-      { text: 'Célula dendrítica', isCorrect: false },
-      { text: 'Monocito', isCorrect: false },
-    ],
-  },
-  {
-    text: '¿Cuál es el mecanismo principal de hipersensibilidad tipo IV (retardada)?',
-    options: [
-      { text: 'Mediada por linfocitos T sensibilizados', isCorrect: true },
-      { text: 'Mediada por IgE', isCorrect: false },
-      { text: 'Mediada por depósito de complejos antígeno-anticuerpo', isCorrect: false },
-      { text: 'Mediada por IgG citotóxica', isCorrect: false },
-    ],
-  },
-  {
-    text: '¿Cuál de los siguientes marcadores se asocia con linfocitos T helper?',
-    options: [
-      { text: 'CD4', isCorrect: true },
-      { text: 'CD8', isCorrect: false },
-      { text: 'CD19', isCorrect: false },
-      { text: 'CD56', isCorrect: false },
-    ],
-  },
-  {
-    text: '¿Qué proceso permite a los linfocitos B producir anticuerpos de mayor afinidad con el tiempo?',
-    options: [
-      { text: 'Hipermutación somática y selección en centros germinales', isCorrect: true },
-      { text: 'Recombinación V(D)J', isCorrect: false },
-      { text: 'Activación del complemento', isCorrect: false },
-      { text: 'Presentación antigénica por MHC-I', isCorrect: false },
-    ],
-  },
-  {
-    text: '¿Qué interleucina promueve principalmente la diferenciación de linfocitos Th2?',
-    options: [
-      { text: 'IL-4', isCorrect: true },
-      { text: 'IL-12', isCorrect: false },
-      { text: 'IFN-γ', isCorrect: false },
-      { text: 'IL-17', isCorrect: false },
-    ],
-  },
-  {
-    text: '¿Cuál es la principal célula efectora en la inmunidad antitumoral adaptativa?',
-    options: [
-      { text: 'Linfocito T CD8+ citotóxico', isCorrect: true },
-      { text: 'Linfocito B', isCorrect: false },
-      { text: 'Basófilo', isCorrect: false },
-      { text: 'Célula plasmática', isCorrect: false },
-    ],
-  },
-  {
-    text: '¿Qué anticuerpo cruza la barrera placentaria otorgando inmunidad pasiva al feto?',
-    options: [
-      { text: 'IgG', isCorrect: true },
-      { text: 'IgA', isCorrect: false },
-      { text: 'IgM', isCorrect: false },
-      { text: 'IgE', isCorrect: false },
-    ],
-  },
-  {
-    text: '¿Qué componente del sistema del complemento actúa como potente anafilotoxina?',
-    options: [
-      { text: 'C5a', isCorrect: true },
-      { text: 'C1q', isCorrect: false },
-      { text: 'C4b', isCorrect: false },
-      { text: 'C3b', isCorrect: false },
-    ],
-  },
-  {
-    text: '¿Cuál es la definición correcta de tolerancia central?',
-    options: [
-      { text: 'Eliminación de linfocitos autorreactivos en órganos linfoides primarios', isCorrect: true },
-      { text: 'Activación de linfocitos por antígenos propios en tejidos periféricos', isCorrect: false },
-      { text: 'Producción de IgG frente a antígenos propios', isCorrect: false },
-      { text: 'Inactivación de células NK en bazo', isCorrect: false },
+      { text: 'Escolar con antecedentes de asma con 8 episodios de rinofaringitis aguda en el último año', isCorrect: false },
+      { text: 'Preescolar con antecedentes de rinitis alérgica, con un episodio de neumonía adquirida en la comunidad que responde a antibióticos orales', isCorrect: false },
+      { text: 'Adolescente con historia de 2 episodios de sinusitis grave en el último año con necesidad de tratamiento endovenoso en la segunda infección', isCorrect: true },
+      { text: 'Lactante sano hospitalizado durante 5 días, por infección respiratoria debido a virus de Influenza con requerimiento bajo de oxígeno por naricera, sin necesidad de antibióticos', isCorrect: false },
     ],
   },
 ];
 
+const EXAM_TITLE = 'III Jornadas Regionales SCAI';
+
 try {
-  const existing = await prisma.exam.findFirst({ where: { title: 'Test de Inmunología Clínica' } });
-  if (existing) {
+  const existingExams = await prisma.exam.findMany({
+    where: {
+      OR: [
+        { title: EXAM_TITLE },
+        { title: 'Test de Inmunología Clínica' },
+      ],
+    },
+  });
+
+  for (const existing of existingExams) {
     await prisma.certificate.deleteMany({ where: { examId: existing.id } });
     await prisma.examAttempt.deleteMany({ where: { examId: existing.id } });
     await prisma.exam.delete({ where: { id: existing.id } });
-    console.log('Examen anterior eliminado.');
   }
+
+  if (existingExams.length) console.log('Exámenes anteriores eliminados.');
 
   const course = await prisma.course.findFirst({ where: { published: true } });
 
   const exam = await prisma.exam.create({
     data: {
-      title: 'Test de Inmunología Clínica',
+      title: EXAM_TITLE,
       courseId: course?.id,
       passingScore: 67,
       published: true,
@@ -309,7 +200,7 @@ try {
   console.log('Examen creado:', exam.id);
   console.log('Preguntas:', exam.questions.length);
   console.log('Nota máxima: 7.0');
-  console.log('Nota de aprobación: 5.0');
+  console.log('Nota de aprobación: 5.0 (11/16 correctas)');
 } finally {
   await prisma.$disconnect();
 }

@@ -9,6 +9,7 @@ import { PaymentModule } from './payment/payment.module.js';
 import { PurchaseModule } from './purchase/purchase.module.js';
 import { ExamModule } from './exam/exam.module.js';
 import { CertificateModule } from './certificate/certificate.module.js';
+import { AttendanceModule } from './attendance/attendance.module.js';
 
 @Controller()
 class HealthController {
@@ -30,6 +31,7 @@ class HealthController {
     PurchaseModule,
     ExamModule,
     CertificateModule,
+    AttendanceModule,
   ],
   controllers: [HealthController],
 })

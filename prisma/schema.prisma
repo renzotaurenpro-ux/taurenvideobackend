@@ -93,8 +93,9 @@ model Exam {
   updatedAt    DateTime       @updatedAt
   course       Course?        @relation(fields: [courseId], references: [id], onDelete: SetNull)
   questions    ExamQuestion[]
-  attempts     ExamAttempt[]
-  certificates Certificate[]
+  attempts             ExamAttempt[]
+  certificates         Certificate[]
+  attendanceExamAttempts AttendanceExamAttempt[]
 
   @@map("exams")
 }
@@ -162,4 +163,42 @@ model Purchase {
 
   @@unique([userId, courseId])
   @@map("purchases")
+}
+
+model AttendanceEligibility {
+  id            String                  @id @default(uuid())
+  email         String                  @unique
+  firstName     String
+  lastName      String
+  watchedOver80 Boolean                 @default(false)
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  certificate   AttendanceCertificate?
+  examAttempts  AttendanceExamAttempt[]
+
+  @@map("attendance_eligibility")
+}
+
+model AttendanceExamAttempt {
+  id            String                @id @default(uuid())
+  eligibilityId String
+  examId        String
+  score         Int
+  passed        Boolean
+  submittedAt   DateTime              @default(now())
+  eligibility   AttendanceEligibility @relation(fields: [eligibilityId], references: [id], onDelete: Cascade)
+  exam          Exam                  @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@unique([eligibilityId, examId])
+  @@map("attendance_exam_attempts")
+}
+
+model AttendanceCertificate {
+  id              String                @id @default(uuid())
+  eligibilityId   String                @unique
+  certificateCode String                @unique
+  issuedAt        DateTime              @default(now())
+  eligibility     AttendanceEligibility @relation(fields: [eligibilityId], references: [id], onDelete: Cascade)
+
+  @@map("attendance_certificates")
 }
