@@ -16,9 +16,19 @@ import { Role } from '../../generated/prisma/client.js';
 export class AttendanceController {
   constructor(private attendanceService: AttendanceService) {}
 
-  @Post('claim')
-  claim(@Body() dto: AttendanceEmailDto) {
-    return this.attendanceService.claim(dto.email);
+  @Post('status')
+  status(@Body() dto: AttendanceEmailDto) {
+    return this.attendanceService.status(dto.email);
+  }
+
+  @Post('claim/viewing')
+  claimViewing(@Body() dto: AttendanceEmailDto) {
+    return this.attendanceService.claimViewing(dto.email);
+  }
+
+  @Post('claim/exam')
+  claimExam(@Body() dto: AttendanceEmailDto) {
+    return this.attendanceService.claimExam(dto.email);
   }
 
   @Post('exam')

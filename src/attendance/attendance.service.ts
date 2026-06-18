@@ -1,11 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { randomBytes } from 'crypto';
 import { ImportAttendeeDto, SubmitAttendanceExamDto } from './dto/attendance.dto.js';
+import { AttendanceCertificateType } from '../../generated/prisma/client.js';
 
-const EVENT = {
+const EVENT_BASE = {
   organization: 'SOCIEDAD CHILENA DE ALERGIA E INMUNOLOGÍA',
-  type: 'CERTIFICADO DE ASISTENCIA',
   eventTitle: 'III Jornadas Regionales de Inmunología Clínica',
   eventSubtitle: 'Cuando el Sistema Inmune Falla: Desafíos en Errores Innatos de la Inmunidad',
   eventDate: '19 de junio de 2026',
@@ -16,6 +16,22 @@ const EVENT = {
   director2Role: 'Directora de Redes Sociales y Regional de SCAI',
 };
 
+const CERTIFICATE_META: Record<
+  AttendanceCertificateType,
+  { type: string; label: string; title: string }
+> = {
+  LIVE_VIEWING: {
+    type: 'LIVE_VIEWING',
+    label: 'CERTIFICADO DE ASISTENCIA AL EVENTO EN VIVO',
+    title: 'Certificado de Asistencia al Evento en Vivo',
+  },
+  EXAM: {
+    type: 'EXAM',
+    label: 'CERTIFICADO DE EXAMEN DEL EVENTO',
+    title: 'Certificado de Examen del Evento',
+  },
+};
+
 @Injectable()
 export class AttendanceService {
   constructor(private prisma: PrismaService) {}
@@ -24,30 +40,71 @@ export class AttendanceService {
     return email.trim().toLowerCase();
   }
 
-  private formatCertificate(eligibility: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    certificate: { certificateCode: string; issuedAt: Date } | null;
-  }) {
-    if (!eligibility.certificate) return null;
+  private getCertificate(
+    certificates: { type: AttendanceCertificateType; certificateCode: string; issuedAt: Date }[],
+    type: AttendanceCertificateType,
+  ) {
+    return certificates.find((c) => c.type === type) ?? null;
+  }
+
+  private formatCertificate(
+    eligibility: { firstName: string; lastName: string; email: string },
+    cert: { type: AttendanceCertificateType; certificateCode: string; issuedAt: Date },
+  ) {
+    const meta = CERTIFICATE_META[cert.type];
     return {
-      certificateCode: eligibility.certificate.certificateCode,
-      issuedAt: eligibility.certificate.issuedAt,
+      certificateType: meta.type,
+      certificateLabel: meta.label,
+      certificateTitle: meta.title,
+      certificateCode: cert.certificateCode,
+      issuedAt: cert.issuedAt,
       recipient: {
         firstName: eligibility.firstName,
         lastName: eligibility.lastName,
         fullName: `${eligibility.firstName} ${eligibility.lastName}`.trim(),
         email: eligibility.email,
       },
-      event: EVENT,
+      event: { ...EVENT_BASE, type: meta.label },
+    };
+  }
+
+  private buildStatus(
+    eligibility: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      watchedOver80: boolean;
+      certificates: { type: AttendanceCertificateType; certificateCode: string; issuedAt: Date }[];
+      examAttempts: { passed: boolean }[];
+    },
+    registered = true,
+  ) {
+    const viewingCertificate = this.getCertificate(eligibility.certificates, 'LIVE_VIEWING');
+    const examCertificate = this.getCertificate(eligibility.certificates, 'EXAM');
+    const passedExam = eligibility.examAttempts.some((a) => a.passed);
+
+    const canClaimViewing = registered && eligibility.watchedOver80 && !viewingCertificate;
+    const canTakeExam = registered && !examCertificate && !passedExam;
+    const canOnlyTakeExam = registered && !eligibility.watchedOver80;
+
+    return {
+      watchedOver80: eligibility.watchedOver80,
+      canClaimViewing,
+      canTakeExam,
+      canOnlyTakeExam,
+      viewingCertificate: viewingCertificate
+        ? this.formatCertificate(eligibility, viewingCertificate)
+        : null,
+      examCertificate: examCertificate
+        ? this.formatCertificate(eligibility, examCertificate)
+        : null,
     };
   }
 
   private async findEligibilityByEmail(email: string) {
     return this.prisma.attendanceEligibility.findFirst({
       where: { email: { equals: this.normalizeEmail(email), mode: 'insensitive' } },
-      include: { certificate: true, examAttempts: true },
+      include: { certificates: true, examAttempts: true },
     });
   }
 
@@ -65,29 +122,34 @@ export class AttendanceService {
     if (!eligibility) {
       throw new NotFoundException('No encontramos tu correo en la lista de asistentes del evento');
     }
-    if (eligibility.watchedOver80) {
-      throw new ForbiddenException(
-        'Calificas por asistencia directa. Usa /attendance/claim con tu correo',
-      );
+    if (this.getCertificate(eligibility.certificates, 'EXAM')) {
+      throw new BadRequestException('Ya obtuviste tu certificado de examen del evento');
     }
-    if (eligibility.certificate) {
-      throw new BadRequestException('Ya obtuviste tu certificado de asistencia');
-    }
-    const passedAttempt = eligibility.examAttempts.find((a) => a.passed);
-    if (passedAttempt) {
-      throw new BadRequestException('Ya aprobaste el test. Reclama tu certificado con /attendance/claim');
+    if (eligibility.examAttempts.some((a) => a.passed)) {
+      throw new BadRequestException('Ya aprobaste el examen. Reclama tu certificado con POST /attendance/claim/exam');
     }
     return eligibility;
   }
 
-  private async issueCertificate(eligibilityId: string) {
+  private async issueCertificate(eligibilityId: string, type: AttendanceCertificateType) {
+    const existing = await this.prisma.attendanceCertificate.findUnique({
+      where: { eligibilityId_type: { eligibilityId, type } },
+    });
+    if (existing) {
+      return this.prisma.attendanceEligibility.findUnique({
+        where: { id: eligibilityId },
+        include: { certificates: true },
+      });
+    }
+
     const certificateCode = randomBytes(16).toString('hex').toUpperCase();
     await this.prisma.attendanceCertificate.create({
-      data: { eligibilityId, certificateCode },
+      data: { eligibilityId, type, certificateCode },
     });
+
     return this.prisma.attendanceEligibility.findUnique({
       where: { id: eligibilityId },
-      include: { certificate: true },
+      include: { certificates: true },
     });
   }
 
@@ -128,61 +190,162 @@ export class AttendanceService {
   async findAllAdmin() {
     return this.prisma.attendanceEligibility.findMany({
       include: {
-        certificate: { select: { certificateCode: true, issuedAt: true } },
+        certificates: { select: { type: true, certificateCode: true, issuedAt: true } },
         examAttempts: { select: { score: true, passed: true, submittedAt: true } },
       },
       orderBy: { lastName: 'asc' },
     });
   }
 
-  async claim(email: string) {
+  async status(email: string) {
     const eligibility = await this.findEligibilityByEmail(email);
 
     if (!eligibility) {
       return {
         status: 'NOT_FOUND',
         message: 'No encontramos tu correo en la lista de asistentes del evento.',
-        canTakeExam: false,
-        certificate: null,
+        ...this.buildStatus(
+          {
+            firstName: '',
+            lastName: '',
+            email,
+            watchedOver80: false,
+            certificates: [],
+            examAttempts: [],
+          },
+          false,
+        ),
       };
     }
 
-    if (eligibility.certificate) {
+    const state = this.buildStatus(eligibility);
+
+    return {
+      status: 'OK',
+      message: 'Estado de certificados del evento en vivo.',
+      recipient: {
+        firstName: eligibility.firstName,
+        lastName: eligibility.lastName,
+        fullName: `${eligibility.firstName} ${eligibility.lastName}`.trim(),
+        email: eligibility.email,
+      },
+      ...state,
+    };
+  }
+
+  async claimViewing(email: string) {
+    const eligibility = await this.findEligibilityByEmail(email);
+
+    if (!eligibility) {
       return {
-        status: 'ALREADY_ISSUED',
-        message: 'Ya obtuviste tu certificado de asistencia.',
-        canTakeExam: false,
-        certificate: this.formatCertificate(eligibility),
+        status: 'NOT_FOUND',
+        message: 'No encontramos tu correo en la lista de asistentes del evento.',
+        certificate: null,
+        ...this.buildStatus(
+          {
+            firstName: '',
+            lastName: '',
+            email,
+            watchedOver80: false,
+            certificates: [],
+            examAttempts: [],
+          },
+          false,
+        ),
       };
     }
+
+    const state = this.buildStatus(eligibility);
 
     if (!eligibility.watchedOver80) {
-      const passedAttempt = eligibility.examAttempts.find((a) => a.passed);
-      if (!passedAttempt) {
-        return {
-          status: 'NOT_ELIGIBLE',
-          message:
-            'No alcanzaste el 80% de visualización. Realiza el test con tu correo para obtener tu certificado de asistencia.',
-          canTakeExam: true,
-          certificate: null,
-        };
-      }
-
-      const issued = await this.issueCertificate(eligibility.id);
       return {
-        status: 'CERTIFICATE_ISSUED',
-        message: 'Obtuviste tu certificado de asistencia por aprobar el test del evento.',
-        canTakeExam: false,
-        certificate: this.formatCertificate(issued!),
+        status: 'NOT_ELIGIBLE',
+        message:
+          'No alcanzaste el 80% de visualización del evento en vivo. Puedes obtener el certificado de examen del evento.',
+        certificate: null,
+        ...state,
       };
     }
 
-    const issued = await this.issueCertificate(eligibility.id);
+    if (state.viewingCertificate) {
+      return {
+        status: 'ALREADY_ISSUED',
+        message: 'Ya obtuviste tu certificado de asistencia al evento en vivo.',
+        certificate: state.viewingCertificate,
+        ...state,
+      };
+    }
+
+    const issued = await this.issueCertificate(eligibility.id, 'LIVE_VIEWING');
+    const viewingCertificate = this.formatCertificate(
+      issued!,
+      this.getCertificate(issued!.certificates, 'LIVE_VIEWING')!,
+    );
+    const updatedState = this.buildStatus({ ...issued!, examAttempts: eligibility.examAttempts });
+
     return {
       status: 'CERTIFICATE_ISSUED',
-      message: 'Obtuviste tu certificado de asistencia por haber visto más del 80% del evento.',
-      canTakeExam: false,
-      certificate: this.formatCertificate(issued!),
+      message: 'Obtuviste tu certificado de asistencia al evento en vivo.',
+      certificate: viewingCertificate,
+      ...updatedState,
+    };
+  }
+
+  async claimExam(email: string) {
+    const eligibility = await this.findEligibilityByEmail(email);
+
+    if (!eligibility) {
+      return {
+        status: 'NOT_FOUND',
+        message: 'No encontramos tu correo en la lista de asistentes del evento.',
+        certificate: null,
+        ...this.buildStatus(
+          {
+            firstName: '',
+            lastName: '',
+            email,
+            watchedOver80: false,
+            certificates: [],
+            examAttempts: [],
+          },
+          false,
+        ),
+      };
+    }
+
+    const state = this.buildStatus(eligibility);
+
+    if (state.examCertificate) {
+      return {
+        status: 'ALREADY_ISSUED',
+        message: 'Ya obtuviste tu certificado de examen del evento.',
+        certificate: state.examCertificate,
+        ...state,
+      };
+    }
+
+    const passedAttempt = eligibility.examAttempts.find((a) => a.passed);
+    if (!passedAttempt) {
+      return {
+        status: 'NOT_ELIGIBLE',
+        message: 'Debes aprobar el examen del evento para obtener el certificado de examen.',
+        certificate: null,
+        ...state,
+      };
+    }
+
+    const issued = await this.issueCertificate(eligibility.id, 'EXAM');
+    const examCertificate = this.formatCertificate(
+      issued!,
+      this.getCertificate(issued!.certificates, 'EXAM')!,
+    );
+    const updatedState = this.buildStatus({ ...issued!, examAttempts: eligibility.examAttempts });
+
+    return {
+      status: 'CERTIFICATE_ISSUED',
+      message: 'Obtuviste tu certificado de examen del evento.',
+      certificate: examCertificate,
+      ...updatedState,
     };
   }
 
@@ -248,6 +411,11 @@ export class AttendanceService {
       update: { score, passed, submittedAt: new Date() },
     });
 
+    const state = this.buildStatus({
+      ...eligibility,
+      examAttempts: [{ passed }, ...eligibility.examAttempts],
+    });
+
     if (!passed) {
       return {
         status: 'FAILED',
@@ -259,21 +427,28 @@ export class AttendanceService {
         notaAprobacion: 5,
         passed: false,
         certificate: null,
+        ...state,
       };
     }
 
-    const issued = await this.issueCertificate(eligibility.id);
+    const issued = await this.issueCertificate(eligibility.id, 'EXAM');
+    const examCertificate = this.formatCertificate(
+      issued!,
+      this.getCertificate(issued!.certificates, 'EXAM')!,
+    );
+    const updatedState = this.buildStatus({ ...issued!, examAttempts: [{ passed }] });
 
     return {
       status: 'CERTIFICATE_ISSUED',
-      message: 'Aprobaste el test. Tu certificado de asistencia ha sido emitido.',
+      message: 'Aprobaste el examen. Tu certificado de examen del evento ha sido emitido.',
       correctas: correct,
       total,
       nota,
       notaMaxima: 7,
       notaAprobacion: 5,
       passed: true,
-      certificate: this.formatCertificate(issued!),
+      certificate: examCertificate,
+      ...updatedState,
     };
   }
 
@@ -284,12 +459,16 @@ export class AttendanceService {
     });
 
     if (!cert) {
-      return { valid: false, type: 'ATTENDANCE' };
+      return { valid: false };
     }
+
+    const meta = CERTIFICATE_META[cert.type];
 
     return {
       valid: true,
-      type: 'ATTENDANCE',
+      certificateType: meta.type,
+      certificateLabel: meta.label,
+      certificateTitle: meta.title,
       certificateCode: cert.certificateCode,
       issuedAt: cert.issuedAt,
       recipient: {
@@ -298,7 +477,7 @@ export class AttendanceService {
         fullName: `${cert.eligibility.firstName} ${cert.eligibility.lastName}`.trim(),
         email: cert.eligibility.email,
       },
-      event: EVENT,
+      event: { ...EVENT_BASE, type: meta.label },
     };
   }
 }
