@@ -4,6 +4,8 @@ import { randomBytes } from 'crypto';
 import { ImportAttendeeDto, SubmitAttendanceExamDto } from './dto/attendance.dto.js';
 import { AttendanceCertificateType } from '../../generated/prisma/client.js';
 
+export const VIEWING_THRESHOLD_PERCENT = 50;
+
 const EVENT_BASE = {
   organization: 'SOCIEDAD CHILENA DE ALERGIA E INMUNOLOGÍA',
   eventTitle: 'III Jornadas Regionales de Inmunología Clínica',
@@ -73,7 +75,7 @@ export class AttendanceService {
       firstName: string;
       lastName: string;
       email: string;
-      watchedOver80: boolean;
+      watchedOver50: boolean;
       certificates: { type: AttendanceCertificateType; certificateCode: string; issuedAt: Date }[];
       examAttempts: { passed: boolean }[];
     },
@@ -83,12 +85,13 @@ export class AttendanceService {
     const examCertificate = this.getCertificate(eligibility.certificates, 'EXAM');
     const passedExam = eligibility.examAttempts.some((a) => a.passed);
 
-    const canClaimViewing = registered && eligibility.watchedOver80 && !viewingCertificate;
+    const canClaimViewing = registered && eligibility.watchedOver50 && !viewingCertificate;
     const canTakeExam = registered && !examCertificate && !passedExam;
-    const canOnlyTakeExam = registered && !eligibility.watchedOver80;
+    const canOnlyTakeExam = registered && !eligibility.watchedOver50;
 
     return {
-      watchedOver80: eligibility.watchedOver80,
+      viewingThresholdPercent: VIEWING_THRESHOLD_PERCENT,
+      watchedOver50: eligibility.watchedOver50,
       canClaimViewing,
       canTakeExam,
       canOnlyTakeExam,
@@ -167,7 +170,7 @@ export class AttendanceService {
           data: {
             firstName: a.firstName,
             lastName: a.lastName,
-            watchedOver80: a.watchedOver80,
+            watchedOver50: a.watchedOver50,
           },
         });
         updated++;
@@ -177,7 +180,7 @@ export class AttendanceService {
             email,
             firstName: a.firstName,
             lastName: a.lastName,
-            watchedOver80: a.watchedOver80,
+            watchedOver50: a.watchedOver50,
           },
         });
         created++;
@@ -209,7 +212,7 @@ export class AttendanceService {
             firstName: '',
             lastName: '',
             email,
-            watchedOver80: false,
+            watchedOver50: false,
             certificates: [],
             examAttempts: [],
           },
@@ -246,7 +249,7 @@ export class AttendanceService {
             firstName: '',
             lastName: '',
             email,
-            watchedOver80: false,
+            watchedOver50: false,
             certificates: [],
             examAttempts: [],
           },
@@ -257,11 +260,11 @@ export class AttendanceService {
 
     const state = this.buildStatus(eligibility);
 
-    if (!eligibility.watchedOver80) {
+    if (!eligibility.watchedOver50) {
       return {
         status: 'NOT_ELIGIBLE',
         message:
-          'No alcanzaste el 80% de visualización del evento en vivo. Puedes obtener el certificado de examen del evento.',
+          `No alcanzaste el ${VIEWING_THRESHOLD_PERCENT}% de visualización del evento en vivo. Puedes obtener el certificado de examen del evento.`,
         certificate: null,
         ...state,
       };
@@ -304,7 +307,7 @@ export class AttendanceService {
             firstName: '',
             lastName: '',
             email,
-            watchedOver80: false,
+            watchedOver50: false,
             certificates: [],
             examAttempts: [],
           },

@@ -175,7 +175,7 @@ model AttendanceEligibility {
   email         String                  @unique
   firstName     String
   lastName      String
-  watchedOver80 Boolean                 @default(false)
+  watchedOver50 Boolean                 @default(false)
   createdAt     DateTime                @default(now())
   updatedAt     DateTime                @updatedAt
   certificates  AttendanceCertificate[]

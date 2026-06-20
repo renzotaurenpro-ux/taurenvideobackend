@@ -11,7 +11,7 @@ const CSV_PATH = 'C:/Users/reasd/Downloads/BBDD Asistentes III Jornadas regional
 const STREAM_START = new Date('2026-06-19T07:51:45');
 const STREAM_END = new Date('2026-06-19T18:52:03');
 const STREAM_DURATION_MIN = (STREAM_END - STREAM_START) / 60000;
-const THRESHOLD = 0.8;
+const THRESHOLD = 0.5;
 
 function parseLocalDateTime(str) {
   const cleaned = str.trim().replace(/"/g, '');
@@ -65,7 +65,7 @@ try {
   const attendees = [...byEmail.values()].map((a) => ({
     ...a,
     pct: Math.round((a.totalMins / STREAM_DURATION_MIN) * 1000) / 10,
-    watchedOver80: a.totalMins / STREAM_DURATION_MIN >= THRESHOLD,
+    watchedOver50: a.totalMins / STREAM_DURATION_MIN >= THRESHOLD,
   }));
 
   attendees.sort((a, b) => b.totalMins - a.totalMins);
@@ -84,31 +84,31 @@ try {
       missingInDb.push(a.email);
       continue;
     }
-    if (row.watchedOver80 === a.watchedOver80) match++;
+    if (row.watchedOver50 === a.watchedOver50) match++;
     else {
       mismatch++;
-      wrongFlag.push({ email: a.email, csv: a.watchedOver80, db: row.watchedOver80 });
+      wrongFlag.push({ email: a.email, csv: a.watchedOver50, db: row.watchedOver50 });
     }
   }
 
   const extraInDb = db.filter((d) => !byEmail.has(d.email.toLowerCase()));
 
   console.log('=== RESUMEN BASE DE DATOS ===');
-  console.log(`Stream total: ${STREAM_DURATION_MIN.toFixed(1)} min | Umbral 80%: ${(STREAM_DURATION_MIN * 0.8).toFixed(1)} min`);
+  console.log(`Stream total: ${STREAM_DURATION_MIN.toFixed(1)} min | Umbral 50%: ${(STREAM_DURATION_MIN * 0.5).toFixed(1)} min`);
   console.log(`Filas CSV: ${rows.length} | Emails únicos CSV: ${attendees.length}`);
   console.log(`Registros en BD: ${db.length}`);
-  console.log(`Con +80% CSV: ${attendees.filter((a) => a.watchedOver80).length} | Sin 80%: ${attendees.filter((a) => !a.watchedOver80).length}`);
-  console.log(`Con +80% BD: ${db.filter((d) => d.watchedOver80).length} | Sin 80%: ${db.filter((d) => !d.watchedOver80).length}`);
-  console.log(`Coincidencias watchedOver80: ${match} | Errores: ${mismatch} | Faltan en BD: ${missingInDb.length} | Extra en BD: ${extraInDb.length}`);
+  console.log(`Con +50% CSV: ${attendees.filter((a) => a.watchedOver50).length} | Sin 50%: ${attendees.filter((a) => !a.watchedOver50).length}`);
+  console.log(`Con +50% BD: ${db.filter((d) => d.watchedOver50).length} | Sin 50%: ${db.filter((d) => !d.watchedOver50).length}`);
+  console.log(`Coincidencias watchedOver50: ${match} | Errores: ${mismatch} | Faltan en BD: ${missingInDb.length} | Extra en BD: ${extraInDb.length}`);
 
   console.log('\n=== TOP 10 MÁS TIEMPO ===');
   for (const a of attendees.slice(0, 10)) {
-    console.log(`${a.name} | ${a.email} | ${Math.round(a.totalMins)} min (${a.pct}%) | ${a.sessions} sesiones | +80%: ${a.watchedOver80 ? 'Sí' : 'No'}`);
+    console.log(`${a.name} | ${a.email} | ${Math.round(a.totalMins)} min (${a.pct}%) | ${a.sessions} sesiones | +50%: ${a.watchedOver50 ? 'Sí' : 'No'}`);
   }
 
   console.log('\n=== TOP 10 MENOS TIEMPO ===');
   for (const a of [...attendees].reverse().slice(0, 10)) {
-    console.log(`${a.name} | ${a.email} | ${Math.round(a.totalMins)} min (${a.pct}%) | ${a.sessions} sesiones | +80%: ${a.watchedOver80 ? 'Sí' : 'No'}`);
+    console.log(`${a.name} | ${a.email} | ${Math.round(a.totalMins)} min (${a.pct}%) | ${a.sessions} sesiones | +50%: ${a.watchedOver50 ? 'Sí' : 'No'}`);
   }
 
   if (wrongFlag.length) console.log('\nErrores de flag:', wrongFlag);

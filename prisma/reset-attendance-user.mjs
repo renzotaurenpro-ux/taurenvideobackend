@@ -28,7 +28,7 @@ try {
   console.log(JSON.stringify({
     email: row.email,
     nombre: `${row.firstName} ${row.lastName}`,
-    watchedOver80: row.watchedOver80,
+    watchedOver50: row.watchedOver50,
     certificadosEliminados: deletedCerts.count,
     intentosEliminados: deletedAttempts.count,
     puedeHacerExamen: true,

@@ -19,7 +19,7 @@ export class ImportAttendeeDto {
 
   @ApiProperty()
   @IsBoolean()
-  watchedOver80: boolean;
+  watchedOver50: boolean;
 }
 
 export class BulkImportDto {
