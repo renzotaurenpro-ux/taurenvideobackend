@@ -389,11 +389,17 @@ export class AttendanceService {
     if (total === 0) throw new BadRequestException('El examen no tiene preguntas');
 
     let correct = 0;
+    const answerDetails: { questionId: string; optionId: string; correct: boolean }[] = [];
     for (const question of exam.questions) {
       const answer = dto.answers.find((a) => a.questionId === question.id);
-      if (!answer) continue;
+      if (!answer) {
+        answerDetails.push({ questionId: question.id, optionId: '', correct: false });
+        continue;
+      }
       const selected = question.options.find((o) => o.id === answer.optionId);
-      if (selected?.isCorrect) correct++;
+      const isCorrect = !!selected?.isCorrect;
+      if (isCorrect) correct++;
+      answerDetails.push({ questionId: question.id, optionId: answer.optionId, correct: isCorrect });
     }
 
     const notaExacta = 1 + (correct / total) * 6;
@@ -410,8 +416,9 @@ export class AttendanceService {
         examId: exam.id,
         score,
         passed,
+        answers: answerDetails,
       },
-      update: { score, passed, submittedAt: new Date() },
+      update: { score, passed, answers: answerDetails, submittedAt: new Date() },
     });
 
     const state = this.buildStatus({

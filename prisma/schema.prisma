@@ -190,6 +190,7 @@ model AttendanceExamAttempt {
   examId        String
   score         Int
   passed        Boolean
+  answers       Json?
   submittedAt   DateTime              @default(now())
   eligibility   AttendanceEligibility @relation(fields: [eligibilityId], references: [id], onDelete: Cascade)
   exam          Exam                  @relation(fields: [examId], references: [id], onDelete: Cascade)

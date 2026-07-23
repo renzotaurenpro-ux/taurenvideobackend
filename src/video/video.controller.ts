@@ -7,6 +7,7 @@ import {
   Body,
   Param,
   UseGuards,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { VideoService } from './video.service.js';
@@ -42,12 +43,12 @@ export class VideoController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateVideoDto) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateVideoDto) {
     return this.videoService.update(id, dto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.videoService.remove(id);
   }
 }

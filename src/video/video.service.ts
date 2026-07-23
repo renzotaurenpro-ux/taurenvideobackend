@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { BunnyService } from '../bunny/bunny.service.js';
+import { CourseService } from '../course/course.service.js';
 import { UpdateVideoDto } from './dto/update-video.dto.js';
 import { PrepareUploadDto } from './dto/prepare-upload.dto.js';
 import { RegisterVideoDto } from './dto/register-video.dto.js';
@@ -12,10 +13,14 @@ export class VideoService {
   constructor(
     private prisma: PrismaService,
     private bunny: BunnyService,
+    private courses: CourseService,
   ) {}
 
   private async assertCourse(courseId: string) {
-    const course = await this.prisma.course.findUnique({ where: { id: courseId } });
+    const course = await this.prisma.course.findUnique({
+      where: { id: courseId },
+      select: { id: true },
+    });
     if (!course) throw new NotFoundException('Curso no encontrado');
     return course;
   }
@@ -34,6 +39,17 @@ export class VideoService {
     if (order !== undefined && order !== null) return order;
     const count = await this.prisma.video.count({ where: { courseId } });
     return count + 1;
+  }
+
+  private withEmbedUrl<T extends { bunnyVideoId: string | null; url: string; thumbnailUrl?: string | null }>(
+    video: T,
+  ): T {
+    if (!video.bunnyVideoId) return video;
+    return {
+      ...video,
+      url: this.bunny.getEmbedUrl(video.bunnyVideoId),
+      thumbnailUrl: video.thumbnailUrl || this.bunny.getThumbnailUrl(video.bunnyVideoId),
+    };
   }
 
   async prepareUpload(dto: PrepareUploadDto) {
@@ -62,24 +78,28 @@ export class VideoService {
     await this.assertCourse(dto.courseId);
     await this.assertEpisodeLimit(dto.courseId);
     const order = await this.resolveOrder(dto.courseId, dto.order);
-    return this.prisma.video.create({
+    const video = await this.prisma.video.create({
       data: {
         title: dto.title,
         description: dto.description,
-        url: `https://iframe.mediadelivery.net/embed/${this.bunny['libraryId']}/${dto.bunnyVideoId}`,
+        url: this.bunny.getEmbedUrl(dto.bunnyVideoId),
         bunnyVideoId: dto.bunnyVideoId,
+        thumbnailUrl: this.bunny.getThumbnailUrl(dto.bunnyVideoId),
         courseId: dto.courseId,
         order,
         published: dto.published ?? false,
       },
     });
+    this.courses.clearCaches(dto.courseId);
+    return this.withEmbedUrl(video);
   }
 
   async findAllAdmin() {
-    return this.prisma.video.findMany({
+    const videos = await this.prisma.video.findMany({
       include: { course: { select: { id: true, title: true } } },
       orderBy: [{ courseId: 'asc' }, { order: 'asc' }],
     });
+    return videos.map((v) => this.withEmbedUrl(v));
   }
 
   async findOne(id: string) {
@@ -88,7 +108,7 @@ export class VideoService {
       include: { course: { select: { id: true, title: true } } },
     });
     if (!video) throw new NotFoundException('Video no encontrado');
-    return video;
+    return this.withEmbedUrl(video);
   }
 
   async update(id: string, dto: UpdateVideoDto) {
@@ -97,7 +117,23 @@ export class VideoService {
       await this.assertCourse(dto.courseId);
       await this.assertEpisodeLimit(dto.courseId);
     }
-    return this.prisma.video.update({ where: { id }, data: dto });
+
+    const bunnyVideoId = video.bunnyVideoId;
+    const updated = await this.prisma.video.update({
+      where: { id },
+      data: {
+        ...dto,
+        ...(bunnyVideoId
+          ? {
+              url: this.bunny.getEmbedUrl(bunnyVideoId),
+              thumbnailUrl: dto.thumbnailUrl ?? this.bunny.getThumbnailUrl(bunnyVideoId),
+            }
+          : {}),
+      },
+    });
+
+    this.courses.clearCaches(updated.courseId ?? video.courseId ?? undefined);
+    return this.withEmbedUrl(updated);
   }
 
   async remove(id: string) {
@@ -106,6 +142,7 @@ export class VideoService {
       await this.bunny.deleteVideo(video.bunnyVideoId);
     }
     await this.prisma.video.delete({ where: { id } });
+    this.courses.clearCaches(video.courseId ?? undefined);
     return { message: 'Video eliminado correctamente' };
   }
 }

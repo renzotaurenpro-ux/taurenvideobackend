@@ -16,19 +16,26 @@ async function bootstrap() {
     }),
   );
 
+  const corsOrigins = (process.env.CORS_ORIGINS ?? 'http://localhost:3000')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: ['http://localhost:3000'],
+    origin: corsOrigins,
     credentials: true,
   });
 
-  const config = new DocumentBuilder()
-    .setTitle('Tauren Video API')
-    .setDescription('API backend')
-    .setVersion('1.0.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  if (process.env.ENABLE_SWAGGER === 'true') {
+    const config = new DocumentBuilder()
+      .setTitle('Tauren Video API')
+      .setDescription('API backend')
+      .setVersion('1.0.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, document);
+  }
 
   await app.listen(process.env.PORT ?? 3001);
 }

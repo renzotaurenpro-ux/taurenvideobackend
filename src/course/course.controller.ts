@@ -7,6 +7,7 @@ import {
   Req,
   UseGuards,
   ForbiddenException,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CourseService } from './course.service.js';
@@ -33,19 +34,19 @@ export class CourseController {
   @UseGuards(FirebaseAuthGuard)
   @ApiBearerAuth()
   @Get(':id/watch')
-  async watchCourse(@Param('id') id: string, @Req() req: any) {
+  async watchCourse(@Param('id', ParseUUIDPipe) id: string, @Req() req: { user: { uid: string } }) {
     const { purchased } = await this.purchaseService.checkCourseAccess(req.user.uid, id);
     if (!purchased) {
       throw new ForbiddenException('Debes comprar el curso para acceder a los videos');
     }
-    return this.courseService.findOneWithVideos(id, true);
+    return this.courseService.findOneWithVideos(id);
   }
 
   @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @Put('admin/:id')
-  update(@Param('id') id: string, @Body() dto: UpdateCourseDto) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateCourseDto) {
     return this.courseService.update(id, dto);
   }
 }

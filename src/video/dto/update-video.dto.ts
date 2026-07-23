@@ -15,11 +15,6 @@ export class UpdateVideoDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  url?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
   thumbnailUrl?: string;
 
   @ApiPropertyOptional()
