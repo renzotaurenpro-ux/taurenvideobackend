@@ -67,7 +67,7 @@ try {
       data: {
         title: 'Curso de Inmunología Clínica',
         description: 'Curso completo de inmunología clínica aplicada. Incluye todos los módulos y episodios.',
-        priceClp: 25000,
+        priceClp: 29750,
         published: true,
       },
     });

@@ -8,8 +8,13 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   const existingCourses = await prisma.course.findMany();
   if (existingCourses.length > 0) {
-    console.log('Ya existe un curso, actualizando videos y examen...');
+    console.log('Ya existe un curso, actualizando precio, videos y examen...');
     const course = existingCourses[0];
+
+    await prisma.course.update({
+      where: { id: course.id },
+      data: { priceClp: 29750 },
+    });
 
     await prisma.video.updateMany({
       where: {},
@@ -21,7 +26,7 @@ async function main() {
       data: { courseId: course.id },
     });
 
-    console.log(`Curso: ${course.title} (${course.id})`);
+    console.log(`Curso: ${course.title} (${course.id}) priceClp=29750`);
     const videos = await prisma.video.findMany({ orderBy: { order: 'asc' } });
     videos.forEach((v) => console.log(`  Video: ${v.title} -> courseId: ${v.courseId}`));
     const exams = await prisma.exam.findMany();
@@ -33,7 +38,7 @@ async function main() {
     data: {
       title: 'Curso de Inmunología Clínica',
       description: 'Curso completo de inmunología clínica aplicada. Incluye todos los módulos y episodios.',
-      priceClp: 25000,
+      priceClp: 29750,
       published: true,
     },
   });
