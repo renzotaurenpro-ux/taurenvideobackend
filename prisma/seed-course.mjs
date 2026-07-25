@@ -13,7 +13,7 @@ async function main() {
 
     await prisma.course.update({
       where: { id: course.id },
-      data: { priceClp: 29750 },
+      data: { priceClp: 25000 },
     });
 
     await prisma.video.updateMany({
@@ -26,7 +26,7 @@ async function main() {
       data: { courseId: course.id },
     });
 
-    console.log(`Curso: ${course.title} (${course.id}) priceClp=29750`);
+    console.log(`Curso: ${course.title} (${course.id}) priceClp=25000`);
     const videos = await prisma.video.findMany({ orderBy: { order: 'asc' } });
     videos.forEach((v) => console.log(`  Video: ${v.title} -> courseId: ${v.courseId}`));
     const exams = await prisma.exam.findMany();
@@ -38,7 +38,7 @@ async function main() {
     data: {
       title: 'Curso de Inmunología Clínica',
       description: 'Curso completo de inmunología clínica aplicada. Incluye todos los módulos y episodios.',
-      priceClp: 29750,
+      priceClp: 25000,
       published: true,
     },
   });
