@@ -50,6 +50,8 @@ export class PaymentService {
     if (!pendingUrl) throw new BadRequestException('MP_PENDING_URL no está configurado');
     if (!webhookUrl) throw new BadRequestException('MP_WEBHOOK_URL no está configurado');
 
+    const amountClp = Math.round(course.priceClp * 1.19);
+
     const result = await this.preference.create({
       body: {
         items: [
@@ -58,7 +60,7 @@ export class PaymentService {
             title: course.title,
             description: course.description || undefined,
             quantity: 1,
-            unit_price: course.priceClp,
+            unit_price: amountClp,
             currency_id: 'CLP',
           },
         ],
@@ -78,6 +80,7 @@ export class PaymentService {
         where: { id: existingPurchase.id },
         data: {
           providerSessionId: result.id!,
+          amountClp,
           status: 'PENDING',
         },
       });
@@ -88,7 +91,7 @@ export class PaymentService {
           courseId,
           provider: 'MERCADOPAGO',
           providerSessionId: result.id!,
-          amountClp: course.priceClp,
+          amountClp,
           status: 'PENDING',
         },
       });
