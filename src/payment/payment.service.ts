@@ -50,10 +50,7 @@ export class PaymentService {
     if (!pendingUrl) throw new BadRequestException('MP_PENDING_URL no está configurado');
     if (!webhookUrl) throw new BadRequestException('MP_WEBHOOK_URL no está configurado');
 
-    const NETO = 25000
-    const TOTAL = Math.round(NETO * 1.19)
-    const amountClp =
-      course.priceClp >= TOTAL ? course.priceClp : Math.round(course.priceClp * 1.19)
+    const amountClp = 30000;
 
     const result = await this.preference.create({
       body: {
