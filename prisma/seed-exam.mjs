@@ -64,15 +64,6 @@ const questions = [
     ],
   },
   {
-    text: 'En relación a las Inmunodeficiencias combinadas severas (SCID), es correcto:',
-    options: [
-      { text: 'Son el fenotipo clínico más frecuente dentro de los errores innatos de la inmunidad', isCorrect: false },
-      { text: 'Tienen 100% de mortalidad antes de los 2 años de vida', isCorrect: true },
-      { text: 'Presentan alteración del Test de Dihidrorodamina por citometría de flujo', isCorrect: false },
-      { text: 'Presentan valores altos de TRECs en el screening neonatal', isCorrect: false },
-    ],
-  },
-  {
     text: '¿Cuál es el patrón de herencia más frecuente de la enfermedad granulomatosa crónica secundaria a variante del gen CYBB?',
     options: [
       { text: 'Autosómico dominante', isCorrect: false },
@@ -200,7 +191,7 @@ try {
   console.log('Examen creado:', exam.id);
   console.log('Preguntas:', exam.questions.length);
   console.log('Nota máxima: 7.0');
-  console.log('Nota de aprobación: 5.0 (11/16 correctas)');
+  console.log('Nota de aprobación: 5.0 (10/15 correctas)');
 } finally {
   await prisma.$disconnect();
 }

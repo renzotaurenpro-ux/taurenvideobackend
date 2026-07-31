@@ -266,7 +266,7 @@ try {
   doc.image(chartCorrect, 50 + hw, y, { width: hw });
 
   doc.addPage();
-  drawHeader(doc, 'Análisis de respuestas', `Examen de ${totalQ} preguntas · Mínimo para aprobar: 12 correctas`, generatedAt);
+  drawHeader(doc, 'Análisis de respuestas', `Examen de ${totalQ} preguntas · Mínimo para aprobar: ${Math.ceil(totalQ * (4 / 6))} correctas`, generatedAt);
   y = 115;
 
   if (chartWrong) {
