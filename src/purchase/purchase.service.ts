@@ -13,8 +13,8 @@ export class PurchaseService {
     const key = `${firebaseUid}:${courseId}`;
     const now = Date.now();
     const cached = accessCache.get(key);
-    if (cached && now - cached.at < ACCESS_CACHE_MS) {
-      return { purchased: cached.purchased };
+    if (cached?.purchased && now - cached.at < ACCESS_CACHE_MS) {
+      return { purchased: true };
     }
 
     const user = await this.prisma.user.findUnique({
@@ -32,12 +32,37 @@ export class PurchaseService {
     if (!user) throw new NotFoundException('Usuario no encontrado');
 
     const purchased = user.role === Role.ADMIN || user.purchases.length > 0;
-    accessCache.set(key, { at: now, purchased });
+    if (purchased) {
+      accessCache.set(key, { at: now, purchased: true });
+    } else {
+      accessCache.delete(key);
+    }
     return { purchased };
   }
 
   clearAccessCache(firebaseUid: string, courseId: string) {
     accessCache.delete(`${firebaseUid}:${courseId}`);
+  }
+
+  clearAccessCacheForUser(firebaseUid: string) {
+    const prefix = `${firebaseUid}:`;
+    for (const key of accessCache.keys()) {
+      if (key.startsWith(prefix)) accessCache.delete(key);
+    }
+  }
+
+  clearAllAccessCache() {
+    accessCache.clear();
+  }
+
+  async clearAccessCacheByUserId(userId: string, courseId?: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { firebaseUid: true },
+    });
+    if (!user) return;
+    if (courseId) this.clearAccessCache(user.firebaseUid, courseId);
+    else this.clearAccessCacheForUser(user.firebaseUid);
   }
 
   async getAllPurchases() {

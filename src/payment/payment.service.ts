@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { PurchaseService } from '../purchase/purchase.service.js';
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 
 @Injectable()
@@ -16,6 +17,7 @@ export class PaymentService {
   constructor(
     private configService: ConfigService,
     private prisma: PrismaService,
+    private purchaseService: PurchaseService,
   ) {
     const accessToken = this.configService.get<string>('MP_ACCESS_TOKEN');
     if (!accessToken) {
@@ -136,6 +138,10 @@ export class PaymentService {
         providerPaymentId: String(paymentId),
       },
     });
+
+    if (purchaseStatus === 'COMPLETED') {
+      await this.purchaseService.clearAccessCacheByUserId(userId, courseId);
+    }
 
     return { received: true };
   }
